@@ -1,0 +1,43 @@
+apply plugin: 'com.android.library'
+apply plugin: 'me.tatarka.retrolambda'
+apply plugin: 'com.neenbedankt.android-apt'
+android {
+    compileSdkVersion 24
+    buildToolsVersion "24.0.1"
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    defaultConfig {
+        defaultPublishConfig "debug"
+        minSdkVersion 11
+        targetSdkVersion 23
+        versionCode 1
+        versionName "1.0"
+    }
+    buildTypes {
+        debug {
+            debuggable true;
+        }
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    testCompile 'junit:junit:4.12'
+    compile 'com.squareup.retrofit2:retrofit:2.1.0'
+    compile 'com.squareup.retrofit2:converter-gson:2.1.0'
+    compile 'com.squareup.retrofit2:adapter-rxjava:2.1.0'
+  //  compile 'com.jakewharton.retrofit:retrofit2-rxjava2-adapter:1.0.0-RC1'
+    compile 'io.reactivex:rxandroid:1.1.0'
+    compile 'io.reactivex:rxjava:1.1.0'
+//    compile 'com.squareup.okhttp3:logging-interceptor:latest.release'
+    compile 'com.squareup.okhttp3:okhttp:latest.release'
+    compile 'com.squareup.okio:okio:latest.release'
+    compile 'com.jakewharton.picasso:picasso2-okhttp3-downloader:1.0.2'
+}
