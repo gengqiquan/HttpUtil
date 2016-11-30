@@ -1,6 +1,7 @@
 apply plugin: 'com.android.library'
 apply plugin: 'me.tatarka.retrolambda'
-apply plugin: 'com.neenbedankt.android-apt'
+apply plugin: 'com.novoda.bintray-release'
+
 android {
     compileSdkVersion 24
     buildToolsVersion "24.0.1"
@@ -12,7 +13,7 @@ android {
         defaultPublishConfig "debug"
         minSdkVersion 11
         targetSdkVersion 23
-        versionCode 1
+        versionCode 100
         versionName "1.0"
     }
     buildTypes {
@@ -25,7 +26,12 @@ android {
         }
     }
 }
-
+publish {
+    userOrg = 'gengqiquan' //bintray 的用户名
+    groupId = 'com.gengqiquan'// 依赖时候的前缀
+    artifactId = 'httputil' //库的名字
+    publishVersion = '1.0.0' //版本号
+}
 dependencies {
 
     compile fileTree(dir: 'libs', include: ['*.jar'])

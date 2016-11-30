@@ -200,7 +200,7 @@ public class HttpUtil {
 
     }
 
-    static Map<String, Call> CALL_MAP = new HashMap<>();
+    final  static Map<String, Call> CALL_MAP = new HashMap<>();
 
     /*
     *添加某个请求
@@ -255,7 +255,6 @@ public class HttpUtil {
             CALL_MAP.remove(url);
         }
     }
-
     public static class Builder {
         Map<String, String> params = new HashMap<>();
         String url;
@@ -324,9 +323,17 @@ public class HttpUtil {
             }
             this.url = url;
             this.params = new HashMap<>();
-            this.mErrorCallBack = (v) -> {
+            this.mErrorCallBack = new Error() {
+                @Override
+                public void Error(Object... values) {
+
+                }
             };
-            this.mSuccessCallBack = (s) -> {
+            this.mSuccessCallBack =new Success() {
+                @Override
+                public void Success(String model) {
+
+                }
             };
         }
 
