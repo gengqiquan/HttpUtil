@@ -1,7 +1,7 @@
 apply plugin: 'com.android.library'
 apply plugin: 'me.tatarka.retrolambda'
-apply plugin: 'com.novoda.bintray-release'
-
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'com.jfrog.bintray'
 android {
     compileSdkVersion 24
     buildToolsVersion "24.0.1"
@@ -26,12 +26,10 @@ android {
         }
     }
 }
-publish {
-    userOrg = 'gengqiquan' //bintray 的用户名
-    groupId = 'com.gengqiquan'// 依赖时候的前缀
-    artifactId = 'httputil' //库的名字
-    publishVersion = '1.0.0' //版本号
-}
+def siteUrl = 'https://github.com/gengqiquan/HttpUtil/blob/master/README.md'      // 项目的主页   这个是说明，可随便填
+def gitUrl = 'https://github.com/gengqiquan/HttpUtil'      // Git仓库的url  这个是说明，可随便填
+group = "com.gengqiquan.httputil"    // 这里是groupId ,必须填写  一般填你唯一的包名
+version = "1.0.0"
 dependencies {
 
     compile fileTree(dir: 'libs', include: ['*.jar'])
@@ -39,7 +37,7 @@ dependencies {
     compile 'com.squareup.retrofit2:retrofit:2.1.0'
     compile 'com.squareup.retrofit2:converter-gson:2.1.0'
     compile 'com.squareup.retrofit2:adapter-rxjava:2.1.0'
-  //  compile 'com.jakewharton.retrofit:retrofit2-rxjava2-adapter:1.0.0-RC1'
+    //  compile 'com.jakewharton.retrofit:retrofit2-rxjava2-adapter:1.0.0-RC1'
     compile 'io.reactivex:rxandroid:1.1.0'
     compile 'io.reactivex:rxjava:1.1.0'
 //    compile 'com.squareup.okhttp3:logging-interceptor:latest.release'
@@ -47,3 +45,63 @@ dependencies {
     compile 'com.squareup.okio:okio:latest.release'
     compile 'com.jakewharton.picasso:picasso2-okhttp3-downloader:1.0.2'
 }
+
+install {
+    repositories.mavenInstaller {
+        // This generates POM.xml with proper parameters
+        pom {
+            project {
+                packaging 'aar'
+                // Add your description here
+                name ' list refresh layout'     //项目描述
+                url siteUrl
+                // Set your license
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        id 'gengqiquanlib'        //填写开发者的一些基本信息
+                        name 'gengqiquan'    //填写开发者的一些基本信息
+                        email 'gengqiquan@gmail.com'   //填写开发者的一些基本信息
+                    }
+                }
+                scm {
+                    connection gitUrl
+                    developerConnection gitUrl
+                    url siteUrl
+                }
+            }
+        }
+    }
+}
+
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier = 'sources'
+}
+
+
+
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+bintray {
+    user = properties.getProperty("bintray.user")    //读取 local.properties 文件里面的 bintray.user
+    key = properties.getProperty("bintray.apikey")   //读取 local.properties 文件里面的 bintray.apikey
+    configurations = ['archives']
+    pkg {
+        repo = "sunshine"
+        name = "httputil"    //发布到JCenter上的项目名字，必须填写
+        userOrg = 'gengqiquanlib'
+        websiteUrl = siteUrl
+        vcsUrl = gitUrl
+        licenses = ["Apache-2.0"]
+        publish = true
+    }
+
+}
+
+
