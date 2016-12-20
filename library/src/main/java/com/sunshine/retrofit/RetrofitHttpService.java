@@ -7,7 +7,7 @@ import retrofit2.Call;
 import retrofit2.http.FieldMap;
 import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.GET;
-import retrofit2.http.Header;
+import retrofit2.http.HeaderMap;
 import retrofit2.http.POST;
 import retrofit2.http.QueryMap;
 import retrofit2.http.Url;
@@ -19,17 +19,17 @@ import rx.Observable;
 public interface RetrofitHttpService {
 
     @GET()
-    Call<String> get(@Url String url, @QueryMap Map<String, String> params, @Header("Cache-Time") String time);
+    Call<String> get(@HeaderMap Map<String, String> headers, @Url String url, @QueryMap Map<String, String> params);
 
     @FormUrlEncoded
     @POST()
-    Call<String> post(@Url String url, @FieldMap Map<String, String> params, @Header("Cache-Time") String time);
+    Call<String> post(@HeaderMap Map<String, String> headers, @Url String url, @FieldMap Map<String, String> params);
 
     @GET()
-    Observable<String> Obget(@Url String url, @QueryMap Map<String, String> params, @Header("Cache-Time") String time);
+    Observable<String> Obget(@HeaderMap Map<String, String> headers, @Url String url, @QueryMap Map<String, String> params);
 
     @FormUrlEncoded
     @POST()
-    Observable<String> Obpost(@Url String url, @FieldMap Map<String, String> params, @Header("Cache-Time") String time);
+    Observable<String> Obpost(@HeaderMap Map<String, String> headers, @Url String url, @FieldMap Map<String, String> params);
 
 }

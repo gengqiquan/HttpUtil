@@ -6,6 +6,7 @@ import android.widget.Toast;
 
 import com.sunshine.retrofit.converter.StringConverterFactory;
 import com.sunshine.retrofit.interfaces.Error;
+import com.sunshine.retrofit.interfaces.HeadersInterceptor;
 import com.sunshine.retrofit.interfaces.ParamsInterceptor;
 import com.sunshine.retrofit.interfaces.Success;
 import com.sunshine.retrofit.utils.OkhttpProvidede;
@@ -24,8 +25,6 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import rx.Observable;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
 
 /**
  * Created by 耿 on 2016/6/28.
@@ -36,13 +35,15 @@ public class HttpUtil {
     private Context mAppliactionContext;
     private static String mVersionApi;
     private ParamsInterceptor mParamsInterceptor;
+    private HeadersInterceptor mHeadersInterceptor;
 
     //构造函数私有，不允许外部调用
-    private HttpUtil(RetrofitHttpService mService, Context mAppliactionContext, String mVersionApi, ParamsInterceptor mParamsInterceptor) {
+    private HttpUtil(RetrofitHttpService mService, Context mAppliactionContext, String mVersionApi, ParamsInterceptor mParamsInterceptor, HeadersInterceptor mHeadersInterceptor) {
         this.mService = mService;
         this.mAppliactionContext = mAppliactionContext;
         this.mVersionApi = mVersionApi;
         this.mParamsInterceptor = mParamsInterceptor;
+        this.mHeadersInterceptor = mHeadersInterceptor;
     }
 
     public static RetrofitHttpService getService() {
@@ -58,6 +59,7 @@ public class HttpUtil {
         private List<String> servers = new ArrayList<>();
         private String versionApi;
         private ParamsInterceptor paramsInterceptor;
+        private HeadersInterceptor headersInterceptor;
         private List<Converter.Factory> converterFactories = new ArrayList<>();
         private List<CallAdapter.Factory> adapterFactories = new ArrayList<>();
         OkHttpClient client;
@@ -84,6 +86,11 @@ public class HttpUtil {
 
         public SingletonBuilder paramsInterceptor(ParamsInterceptor interceptor) {
             this.paramsInterceptor = interceptor;
+            return this;
+        }
+
+        public SingletonBuilder headersInterceptor(HeadersInterceptor headersInterceptor) {
+            this.headersInterceptor = headersInterceptor;
             return this;
         }
 
@@ -140,7 +147,7 @@ public class HttpUtil {
             RetrofitHttpService retrofitHttpService =
                     retrofit.create(RetrofitHttpService.class);
 
-            mInstance = new HttpUtil(retrofitHttpService, appliactionContext, versionApi, paramsInterceptor);
+            mInstance = new HttpUtil(retrofitHttpService, appliactionContext, versionApi, paramsInterceptor,headersInterceptor);
             return mInstance;
         }
     }
@@ -173,6 +180,22 @@ public class HttpUtil {
         return params;
     }
 
+    public static Map<String, String> checkHeaders(Map<String, String> headers) {
+        if (headers == null) {
+            headers = new HashMap<>();
+        }
+        if (mInstance.mHeadersInterceptor != null) {
+            headers = mInstance.mHeadersInterceptor.checkHeaders(headers);
+        }
+        //retrofit的headers的值不能为null，此处做下校验，防止出错
+        for (Map.Entry<String, String> entry : headers.entrySet()) {
+            if (entry.getValue() == null) {
+                headers.put(entry.getKey(), "");
+            }
+        }
+        return headers;
+    }
+
     // 判断是否NULL
     public static boolean checkNULL(String str) {
         return str == null || "null".equals(str) || "".equals(str);
@@ -182,7 +205,7 @@ public class HttpUtil {
     // 判断是否NULL
     public static void Error(Context context, String msg) {
         if (checkNULL(msg)) {
-            msg = "似乎已断开与互联网连接";
+            msg = "未知异常";
         }
         Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
     }
@@ -200,7 +223,7 @@ public class HttpUtil {
 
     }
 
-    final  static Map<String, Call> CALL_MAP = new HashMap<>();
+    final static Map<String, Call> CALL_MAP = new HashMap<>();
 
     /*
     *添加某个请求
@@ -255,17 +278,18 @@ public class HttpUtil {
             CALL_MAP.remove(url);
         }
     }
+
     public static class Builder {
         Map<String, String> params = new HashMap<>();
+        Map<String, String> headers = new HashMap<>();
         String url;
         Error mErrorCallBack;
         Success mSuccessCallBack;
-        String cacheTime;
         boolean addVersion = false;
         Object tag;
 
         public Builder CacheTime(String time) {
-            this.cacheTime = time;
+            headers.put("Cache-Time", time);
             return this;
         }
 
@@ -287,6 +311,16 @@ public class HttpUtil {
 
         public Builder Params(String key, String value) {
             this.params.put(key, value);
+            return this;
+        }
+
+        public Builder Headers(Map<String, String> headers) {
+            this.headers.putAll(headers);
+            return this;
+        }
+
+        public Builder Headers(String key, String value) {
+            this.headers.put(key, value);
             return this;
         }
 
@@ -329,7 +363,7 @@ public class HttpUtil {
 
                 }
             };
-            this.mSuccessCallBack =new Success() {
+            this.mSuccessCallBack = new Success() {
                 @Override
                 public void Success(String model) {
 
@@ -349,10 +383,7 @@ public class HttpUtil {
         }
 
         public void get() {
-            if (cacheTime == null) {
-                cacheTime = "";
-            }
-            Call call = mService.get(checkUrl(this.url), checkParams(params), cacheTime);
+            Call call = mService.get(checkHeaders(headers), checkUrl(this.url), checkParams(params));
             putCall(tag, url, call);
             call.enqueue(new Callback<String>() {
                 @Override
@@ -376,10 +407,7 @@ public class HttpUtil {
         }
 
         public void post() {
-            if (cacheTime == null) {
-                cacheTime = "";
-            }
-            Call call = mService.post(checkUrl(this.url), checkParams(params), cacheTime);
+            Call call = mService.post(checkHeaders(headers), checkUrl(this.url), checkParams(params));
             putCall(tag, url, call);
             call.enqueue(new Callback<String>() {
                 @Override
@@ -405,44 +433,14 @@ public class HttpUtil {
         public Observable<String> Obget() {
             this.url = checkUrl(this.url);
             this.params = checkParams(this.params);
-            if (cacheTime == null) {
-                cacheTime = "";
-            }
-            return mService.Obget(url, checkParams(params), cacheTime);
+            return mService.Obget(checkHeaders(headers), url, checkParams(params));
         }
 
 
         public Observable<String> Obpost() {
             this.url = checkUrl(this.url);
             this.params = checkParams(this.params);
-            if (cacheTime == null) {
-                cacheTime = "";
-            }
-            return mService.Obpost(url, checkParams(params), cacheTime);
-        }
-
-        /*
-            *按基础格式返回的数据进行预处理
-            *只返回status为true的情况下的data
-            *@author Administrator
-            *@date 2016/10/20 11:31
-            */
-        public Observable<String> getModelData(Context context) {
-            return Obget()
-                    .map(s -> new BaseModel(s))
-                    .subscribeOn(Schedulers.newThread())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .filter(model -> model.trueStatus(context))//可能有toast操作，必须在主线程
-                    .map(model -> model.data);
-        }
-
-        public Observable<String> postModelData(Context context) {
-            return Obpost()
-                    .map(s -> new BaseModel(s))
-                    .subscribeOn(Schedulers.newThread())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .filter(model -> model.trueStatus(context))
-                    .map(model -> model.data);
+            return mService.Obpost(checkHeaders(headers), url, checkParams(params));
         }
 
     }
