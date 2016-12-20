@@ -13,6 +13,17 @@ retrofit封装库
             }
         };
 ```
+## 请求前headers统一处理
+```java
+    HeadersInterceptor mHeadersInterceptor = new HeadersInterceptor() {
+               @Override
+               public Map checkHeaders(Map headers) {
+                   //追加统一header，例：数据缓存一天
+                   headers.put("Cache-Time", "3600*24");
+                   return headers;
+               }
+           };
+```
 ## 应用入口进行初始化
 ```java
    new HttpUtil.SingletonBuilder(getApplicationContext())
@@ -23,6 +34,7 @@ retrofit封装库
 //                .addConverterFactory()//不传默认RxJavaCallAdapterFactory
 //                .client()//OkHttpClient,不传默认OkHttp3
                 .paramsInterceptor(mParamsInterceptor)//不传不进行参数统一处理
+//               .headersInterceptor(mHeadersInterceptor)//不传不进行headers统一处理
                 .build();
 ```
 
@@ -98,6 +110,7 @@ new HttpUtil.Builder("url")
                 .obpost();//get请求则为：obget()
 ```
  ## 取消请求
+
  调用时添加tag的请求
 ```java
    @Override
