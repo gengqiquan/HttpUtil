@@ -124,17 +124,17 @@ new HttpUtil.Builder("url")
 <dependency>
   <groupId>com.gengqiquan.httputil</groupId>
   <artifactId>library</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.2</version>
   <type>pom</type>
 </dependency>
 ```
 ## gralde 
 ```
-compile 'com.gengqiquan.httputil:library:1.0.0'
+compile 'com.gengqiquan.httputil:library:1.0.2'
 ```
 ## lvy
 ```xml
-<dependency org='com.gengqiquan.httputil' name='library' rev='1.0.0'>
+<dependency org='com.gengqiquan.httputil' name='library' rev='1.0.2'>
   <artifact name='library' ext='pom' ></artifact>
 </dependency>
 ```
