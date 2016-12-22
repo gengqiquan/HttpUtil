@@ -2,22 +2,23 @@ package com.sunshine.httputil;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
+import android.widget.TextView;
 
 import com.sunshine.retrofit.HttpUtil;
-import com.sunshine.retrofit.interfaces.Error;
 import com.sunshine.retrofit.interfaces.HeadersInterceptor;
 import com.sunshine.retrofit.interfaces.ParamsInterceptor;
-import com.sunshine.retrofit.interfaces.Success;
 
+import java.io.File;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
+    TextView progress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        progress = (TextView) findViewById(R.id.text);
         ParamsInterceptor mParamsInterceptor = new ParamsInterceptor() {
             @Override
             public Map checkParams(Map params) {
@@ -35,32 +36,28 @@ public class MainActivity extends AppCompatActivity {
             }
         };
         new HttpUtil.SingletonBuilder(getApplicationContext())
-                .baseUrl("http://dingjia.guchele.com")//URL请求前缀地址。必传
+                .baseUrl("http://sw.bos.baidu.com")//URL请求前缀地址。必传
 //                .versionApi("")//API版本，不传不可以追加接口版本号
 //                .addServerUrl("")//备份服务器ip地址，可多次调用传递
 //                .addCallFactory()//不传默认StringConverterFactory
 //                .addConverterFactory()//不传默认RxJavaCallAdapterFactory
 //                .client()//OkHttpClient,不传默认OkHttp3
-                .paramsInterceptor(mParamsInterceptor)//不传不进行参数统一处理
-                .headersInterceptor(mHeadersInterceptor)//不传不进行headers统一处理
+                //   .paramsInterceptor(mParamsInterceptor)//不传不进行参数统一处理
+                //   .headersInterceptor(mHeadersInterceptor)//不传不进行headers统一处理
                 .build();
-        new HttpUtil.Builder("demo/UserService/home?imageView2/1/w/740/h/440")
-                .Params("wd", "value")
-                // .Version()//需要追加API版本号调用
-                .Tag(this)//需要取消请求的tag
-                .Success(new Success() {
-                    @Override
-                    public void Success(String model) {
-                        Log.e("model", model);
-                    }
+        new HttpUtil.Builder("http://sw.bos.baidu.com/sw-search-sp/software/c07cde08ce4/Photoshop_CS6.exe")
+                .SavePath(getExternalFilesDir(null) + File.separator + "Photoshop_CS6.exe")
+                .Progress(p -> {
+                    progress.setText(100 * p + "%");
                 })
-                .Error(new Error() {
-                    @Override
-                    public void Error(Object... values) {
+                .Success(s -> {
+                    //返回path
+                })
+                .Error(t -> {
+                })
+                .download();
 
-                    }
-                })
-                .get();
+
     }
 
     @Override

@@ -5,6 +5,7 @@ import android.content.Context;
 import com.sunshine.retrofit.BuildConfig;
 import com.sunshine.retrofit.cacahe.CacheProvide;
 import com.sunshine.retrofit.interceptor.CacheInterceptor;
+import com.sunshine.retrofit.interceptor.DownLoadInterceptor;
 import com.sunshine.retrofit.interceptor.HttpLoggingInterceptor;
 import com.sunshine.retrofit.interceptor.RetryAndChangeIpInterceptor;
 
@@ -24,13 +25,14 @@ public class OkhttpProvidede {
             synchronized (OkhttpProvidede.class) {
                 if (okHttpClient == null) {
                     OkHttpClient client = new OkHttpClient.Builder()
-                           .addInterceptor(new RetryAndChangeIpInterceptor(BASE_URL, SERVERS))
+                            .addInterceptor(new DownLoadInterceptor(BASE_URL))
+                            .addInterceptor(new RetryAndChangeIpInterceptor(BASE_URL, SERVERS))
                             .addNetworkInterceptor(new CacheInterceptor())
                             .cache(new CacheProvide(context).provideCache())
                             .retryOnConnectionFailure(true)
-                            .connectTimeout(8, TimeUnit.SECONDS)
-                            .readTimeout(5, TimeUnit.SECONDS)
-                            .writeTimeout(5, TimeUnit.SECONDS)
+                            .connectTimeout(5, TimeUnit.SECONDS)
+                            .readTimeout(8, TimeUnit.SECONDS)
+                            .writeTimeout(8, TimeUnit.SECONDS)
                             .build();
                     if (BuildConfig.DEBUG) {//printf logs while  debug
                         HttpLoggingInterceptor logging = new HttpLoggingInterceptor();

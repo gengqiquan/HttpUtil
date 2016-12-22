@@ -13,8 +13,8 @@ android {
         defaultPublishConfig "debug"
         minSdkVersion 11
         targetSdkVersion 23
-        versionCode 1010
-        versionName "1.0.1"
+        versionCode 1020
+        versionName "1.0.2"
     }
     buildTypes {
         debug {
@@ -29,7 +29,7 @@ android {
 def siteUrl = 'https://github.com/gengqiquan/HttpUtil/blob/master/README.md'      // 项目的主页   这个是说明，可随便填
 def gitUrl = 'https://github.com/gengqiquan/HttpUtil'      // Git仓库的url  这个是说明，可随便填
 group = "com.gengqiquan.httputil"    // 这里是groupId ,必须填写  一般填你唯一的包名
-version = "1.0.1"
+version = "1.0.2"
 dependencies {
 
     compile fileTree(dir: 'libs', include: ['*.jar'])

@@ -1,6 +1,86 @@
 # HttpUtil
 retrofit封装库
 
+# 发起请求
+## get请求
+```  java
+ new HttpUtil.Builder("url")
+                .Params(map)
+                .Params("key","value")
+                .Version()//需要追加API版本号调用
+                .Tag(this)//需要取消请求的tag
+                .Success(str->{
+                    //do something surccess
+                })
+                .Error(v->{
+                    //deal something error
+                })
+                .get();
+```
+## post请求
+```java
+new HttpUtil.Builder("url")
+                .Params(map)
+                .Params("key","value")
+                .Version()//需要追加API版本号调用
+                .Tag(this)//需要取消请求的tag
+                .Success(new Success() {
+                    @Override
+                    public void Success(String model) {
+
+                    }
+                })
+                .Error(new Error() {
+                    @Override
+                    public void Error(Object... values) {
+
+                    }
+                })
+                .post();
+```
+## 下载文件
+
+流式下载，直接写入文件，不存到内存，避免oom
+
+```java
+ new HttpUtil.Builder("http://sw.bos.baidu.com/sw-search-sp/software/c07cde08ce4/Photoshop_CS6.exe")
+                .SavePath(getExternalFilesDir(null) + File.separator + "Photoshop_CS6.exe")
+                .Progress(p -> {
+                    progress.setText(100 * p + "%");
+                })
+                .Success(s -> {
+                    //返回path
+                })
+                .Error(t -> {
+                })
+                .download();
+```
+## rxjava
+
+返回的流为异步
+
+```java
+new HttpUtil.Builder("url")
+                .Params(map)
+                .Params("key","value")
+                .Version()//需要追加API版本号调用
+                .Tag(this)//需要取消请求的tag
+           .obpost();
+               //obget() get请求
+                //Obdownload()下载流;
+```
+ ## 取消请求
+
+ 调用时添加tag的请求
+ 要取消下载请求也需要给请求添加对应的独立tag
+
+```java
+   @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        HttpUtil.cancel(this);
+    }
+```
 # 初始化配置
 ## 请求前参数统一处理，追加渠道名称用户手机号之类
 ```java
@@ -38,87 +118,6 @@ retrofit封装库
                 .build();
 ```
 
-# 发起请求 
-## get请求
-```java
-new HttpUtil.Builder("url")
-                .Params(map)
-                .Params("key","value")
-                .Version()//需要追加API版本号调用
-                .Tag(this)//需要取消请求的tag
-                .Success(new Success() {
-                    @Override
-                    public void Success(String model) {
-
-                    }
-                })
-                .Error(new Error() {
-                    @Override
-                    public void Error(Object... values) {
-
-                    }
-                })
-                .get();
-```
-## post请求
-```java
-new HttpUtil.Builder("url")
-                .Params(map)
-                .Params("key","value")
-                .Version()//需要追加API版本号调用
-                .Tag(this)//需要取消请求的tag
-                .Success(new Success() {
-                    @Override
-                    public void Success(String model) {
-
-                    }
-                })
-                .Error(new Error() {
-                    @Override
-                    public void Error(Object... values) {
-
-                    }
-                })
-                .post();
-```
-## lambda写法
-
-```  java
- new HttpUtil.Builder("url")
-                .Params(map)
-                .Params("key","value")
-                .Version()//需要追加API版本号调用
-                .Tag(this)//需要取消请求的tag
-                .Success(str->{
-                    //do something surccess
-                })
-                .Error(v->{
-                    //deal something error 
-                })
-                .get();
-```
-## rxjava 
-
-返回的流为异步
-
-```java
-new HttpUtil.Builder("url")
-                .Params(map)
-                .Params("key","value")
-                .Version()//需要追加API版本号调用
-                .Tag(this)//需要取消请求的tag
-                .obpost();//get请求则为：obget()
-```
- ## 取消请求
-
- 调用时添加tag的请求
-```java
-   @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        HttpUtil.cancel(this);
-    }
-```
 # 依赖添加
 ## maven
 ```xml

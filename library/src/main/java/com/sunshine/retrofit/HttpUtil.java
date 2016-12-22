@@ -8,8 +8,10 @@ import com.sunshine.retrofit.converter.StringConverterFactory;
 import com.sunshine.retrofit.interfaces.Error;
 import com.sunshine.retrofit.interfaces.HeadersInterceptor;
 import com.sunshine.retrofit.interfaces.ParamsInterceptor;
+import com.sunshine.retrofit.interfaces.Progress;
 import com.sunshine.retrofit.interfaces.Success;
 import com.sunshine.retrofit.utils.OkhttpProvidede;
+import com.sunshine.retrofit.utils.WriteFileUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 import okhttp3.OkHttpClient;
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.CallAdapter;
 import retrofit2.Callback;
@@ -25,6 +28,7 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import rx.Observable;
+import rx.schedulers.Schedulers;
 
 /**
  * Created by 耿 on 2016/6/28.
@@ -32,15 +36,13 @@ import rx.Observable;
 public class HttpUtil {
     private static volatile HttpUtil mInstance;
     private static volatile RetrofitHttpService mService;
-    private Context mAppliactionContext;
     private static String mVersionApi;
     private ParamsInterceptor mParamsInterceptor;
     private HeadersInterceptor mHeadersInterceptor;
 
     //构造函数私有，不允许外部调用
-    private HttpUtil(RetrofitHttpService mService, Context mAppliactionContext, String mVersionApi, ParamsInterceptor mParamsInterceptor, HeadersInterceptor mHeadersInterceptor) {
+    private HttpUtil(RetrofitHttpService mService, String mVersionApi, ParamsInterceptor mParamsInterceptor, HeadersInterceptor mHeadersInterceptor) {
         this.mService = mService;
-        this.mAppliactionContext = mAppliactionContext;
         this.mVersionApi = mVersionApi;
         this.mParamsInterceptor = mParamsInterceptor;
         this.mHeadersInterceptor = mHeadersInterceptor;
@@ -143,11 +145,9 @@ public class HttpUtil {
             Retrofit retrofit = builder
                     .baseUrl(baseUrl + "/")
                     .client(client).build();
-
             RetrofitHttpService retrofitHttpService =
                     retrofit.create(RetrofitHttpService.class);
-
-            mInstance = new HttpUtil(retrofitHttpService, appliactionContext, versionApi, paramsInterceptor,headersInterceptor);
+            mInstance = new HttpUtil(retrofitHttpService, versionApi, paramsInterceptor, headersInterceptor);
             return mInstance;
         }
     }
@@ -283,8 +283,10 @@ public class HttpUtil {
         Map<String, String> params = new HashMap<>();
         Map<String, String> headers = new HashMap<>();
         String url;
+        String path;
         Error mErrorCallBack;
         Success mSuccessCallBack;
+        Progress mProgressCallBack;
         boolean addVersion = false;
         Object tag;
 
@@ -295,6 +297,11 @@ public class HttpUtil {
 
         public Builder Url(String url) {
             this.url = url;
+            return this;
+        }
+
+        public Builder SavePath(String path) {
+            this.path = path;
             return this;
         }
 
@@ -329,6 +336,11 @@ public class HttpUtil {
             return this;
         }
 
+        public Builder Progress(Progress progress) {
+            this.mProgressCallBack = progress;
+            return this;
+        }
+
         public Builder Version() {
             this.addVersion = true;
             return this;
@@ -357,20 +369,13 @@ public class HttpUtil {
             }
             this.url = url;
             this.params = new HashMap<>();
-            this.mErrorCallBack = new Error() {
-                @Override
-                public void Error(Object... values) {
-
-                }
+            this.mErrorCallBack = c -> {
             };
-            this.mSuccessCallBack = new Success() {
-                @Override
-                public void Success(String model) {
-
-                }
+            this.mSuccessCallBack = c -> {
+            };
+            this.mProgressCallBack = c -> {
             };
         }
-
 
         private String checkUrl(String url) {
             if (checkNULL(url)) {
@@ -443,5 +448,41 @@ public class HttpUtil {
             return mService.Obpost(checkHeaders(headers), url, checkParams(params));
         }
 
+        public Observable<ResponseBody> Obdownload() {
+            this.url = checkUrl(this.url);
+            this.params = checkParams(this.params);
+            this.headers.put(Constant.DOWNLOAD, Constant.DOWNLOAD);
+            this.headers.put(Constant.DOWNLOAD_URL, this.url);
+            return mService.Obdownload(checkHeaders(headers), url, checkParams(params));
+        }
+
+        //下载
+        public void download() {
+            this.url = checkUrl(this.url);
+            this.params = checkParams(this.params);
+            this.headers.put(Constant.DOWNLOAD, Constant.DOWNLOAD);
+            this.headers.put(Constant.DOWNLOAD_URL, this.url);
+            Call call = mService.download(checkHeaders(headers), url, checkParams(params));
+            putCall(tag, url, call);
+            Observable<ResponseBody> observable = Observable.create(subscriber -> {
+                        call.enqueue(new Callback<ResponseBody>() {
+                            @Override
+                            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                                subscriber.onNext(response.body());
+                            }
+
+                            @Override
+                            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                                mErrorCallBack.Error(t);
+                            }
+                        });
+                    }
+            );
+            observable.observeOn(Schedulers.io())
+                    .subscribe(body -> WriteFileUtil.writeFile(body, path, mProgressCallBack, mSuccessCallBack, mErrorCallBack), t -> {
+                                mErrorCallBack.Error(t);
+                            }
+                    );
+        }
     }
 }

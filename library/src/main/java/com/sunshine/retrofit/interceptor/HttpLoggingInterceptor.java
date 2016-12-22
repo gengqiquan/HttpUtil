@@ -21,6 +21,8 @@ package com.sunshine.retrofit.interceptor;
 
 import android.util.Log;
 
+import com.sunshine.retrofit.HttpUtil;
+
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -53,13 +55,16 @@ import static okhttp3.internal.platform.Platform.INFO;
  */
 public final class HttpLoggingInterceptor implements Interceptor {
     private static final Charset UTF8 = Charset.forName("UTF-8");
-   String OKHTTPTAG= "okhttp"
-;    public enum Level {
-        /** No logs. */
+    String OKHTTPTAG = "okhttp";
+
+    public enum Level {
+        /**
+         * No logs.
+         */
         NONE,
         /**
          * Logs request and response lines.
-         *
+         * <p>
          * <p>Example:
          * <pre>{@code
          * --> POST /greeting http/1.1 (3-byte body)
@@ -70,7 +75,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
         BASIC,
         /**
          * Logs request and response lines and their respective headers.
-         *
+         * <p>
          * <p>Example:
          * <pre>{@code
          * --> POST /greeting http/1.1
@@ -88,7 +93,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
         HEADERS,
         /**
          * Logs request and response lines and their respective headers and bodies (if present).
-         *
+         * <p>
          * <p>Example:
          * <pre>{@code
          * --> POST /greeting http/1.1
@@ -113,9 +118,12 @@ public final class HttpLoggingInterceptor implements Interceptor {
     public interface Logger {
         void log(String message);
 
-        /** A {@link Logger} defaults output appropriate for the current platform. */
+        /**
+         * A {@link Logger} defaults output appropriate for the current platform.
+         */
         Logger DEFAULT = new Logger() {
-            @Override public void log(String message) {
+            @Override
+            public void log(String message) {
                 Platform.get().log(INFO, message, null);
             }
         };
@@ -133,7 +141,9 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
     private volatile Level level = Level.NONE;
 
-    /** Change the level at which this interceptor logs. */
+    /**
+     * Change the level at which this interceptor logs.
+     */
     public HttpLoggingInterceptor setLevel(Level level) {
         if (level == null) throw new NullPointerException("level == null. Use Level.NONE instead.");
         this.level = level;
@@ -144,10 +154,15 @@ public final class HttpLoggingInterceptor implements Interceptor {
         return level;
     }
 
-    @Override public Response intercept(Chain chain) throws IOException {
+    @Override
+    public Response intercept(Chain chain) throws IOException {
         Level level = this.level;
-
         Request request = chain.request();
+
+        if (!HttpUtil.checkNULL(request.header("DOWNLOAD"))) {//文件下载不打印body
+            level = Level.BASIC;
+        }
+
         if (level == Level.NONE) {
             return chain.proceed(request);
         }
@@ -164,17 +179,17 @@ public final class HttpLoggingInterceptor implements Interceptor {
         if (!logHeaders && hasRequestBody) {
             requestStartMessage += " (" + requestBody.contentLength() + "-byte body)";
         }
-      Log.wtf(OKHTTPTAG,requestStartMessage);
+        Log.wtf(OKHTTPTAG, requestStartMessage);
 
         if (logHeaders) {
             if (hasRequestBody) {
                 // Request body headers are only present when installed as a network interceptor. Force
                 // them to be included (when available) so there values are known.
                 if (requestBody.contentType() != null) {
-                  Log.wtf(OKHTTPTAG,"Content-Type: " + requestBody.contentType());
+                    Log.wtf(OKHTTPTAG, "Content-Type: " + requestBody.contentType());
                 }
                 if (requestBody.contentLength() != -1) {
-                  Log.wtf(OKHTTPTAG,"Content-Length: " + requestBody.contentLength());
+                    Log.wtf(OKHTTPTAG, "Content-Length: " + requestBody.contentLength());
                 }
             }
 
@@ -183,14 +198,14 @@ public final class HttpLoggingInterceptor implements Interceptor {
                 String name = headers.name(i);
                 // Skip headers from the request body as they are explicitly logged above.
                 if (!"Content-Type".equalsIgnoreCase(name) && !"Content-Length".equalsIgnoreCase(name)) {
-                  Log.wtf(OKHTTPTAG,name + ": " + headers.value(i));
+                    Log.wtf(OKHTTPTAG, name + ": " + headers.value(i));
                 }
             }
 
             if (!logBody || !hasRequestBody) {
-              Log.wtf(OKHTTPTAG,"--> END " + request.method());
+                Log.wtf(OKHTTPTAG, "--> END " + request.method());
             } else if (bodyEncoded(request.headers())) {
-              Log.wtf(OKHTTPTAG,"--> END " + request.method() + " (encoded body omitted)");
+                Log.wtf(OKHTTPTAG, "--> END " + request.method() + " (encoded body omitted)");
             } else {
                 Buffer buffer = new Buffer();
                 requestBody.writeTo(buffer);
@@ -201,13 +216,13 @@ public final class HttpLoggingInterceptor implements Interceptor {
                     charset = contentType.charset(UTF8);
                 }
 
-              Log.wtf(OKHTTPTAG,"");
+                Log.wtf(OKHTTPTAG, "");
                 if (isPlaintext(buffer)) {
-                  Log.wtf(OKHTTPTAG,buffer.readString(charset));
-                  Log.wtf(OKHTTPTAG,"--> END " + request.method()
+                    Log.wtf(OKHTTPTAG, buffer.readString(charset));
+                    Log.wtf(OKHTTPTAG, "--> END " + request.method()
                             + " (" + requestBody.contentLength() + "-byte body)");
                 } else {
-                  Log.wtf(OKHTTPTAG,"--> END " + request.method() + " (binary "
+                    Log.wtf(OKHTTPTAG, "--> END " + request.method() + " (binary "
                             + requestBody.contentLength() + "-byte body omitted)");
                 }
             }
@@ -218,7 +233,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
         try {
             response = chain.proceed(request);
         } catch (Exception e) {
-          Log.wtf(OKHTTPTAG,"<-- HTTP FAILED: " + e);
+            Log.wtf(OKHTTPTAG, "<-- HTTP FAILED: " + e);
             throw e;
         }
         long tookMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs);
@@ -226,20 +241,20 @@ public final class HttpLoggingInterceptor implements Interceptor {
         ResponseBody responseBody = response.body();
         long contentLength = responseBody.contentLength();
         String bodySize = contentLength != -1 ? contentLength + "-byte" : "unknown-length";
-      Log.wtf(OKHTTPTAG,"<-- " + response.code() + ' ' + response.message() + ' '
+        Log.wtf(OKHTTPTAG, "<-- " + response.code() + ' ' + response.message() + ' '
                 + response.request().url() + " (" + tookMs + "ms" + (!logHeaders ? ", "
                 + bodySize + " body" : "") + ')');
 
         if (logHeaders) {
             Headers headers = response.headers();
             for (int i = 0, count = headers.size(); i < count; i++) {
-              Log.wtf(OKHTTPTAG,headers.name(i) + ": " + headers.value(i));
+                Log.wtf(OKHTTPTAG, headers.name(i) + ": " + headers.value(i));
             }
 
             if (!logBody || !HttpHeaders.hasBody(response)) {
-              Log.wtf(OKHTTPTAG,"<-- END HTTP");
+                Log.wtf(OKHTTPTAG, "<-- END HTTP");
             } else if (bodyEncoded(response.headers())) {
-              Log.wtf(OKHTTPTAG,"<-- END HTTP (encoded body omitted)");
+                Log.wtf(OKHTTPTAG, "<-- END HTTP (encoded body omitted)");
             } else {
                 BufferedSource source = responseBody.source();
                 source.request(Long.MAX_VALUE); // Buffer the entire body.
@@ -251,26 +266,26 @@ public final class HttpLoggingInterceptor implements Interceptor {
                     try {
                         charset = contentType.charset(UTF8);
                     } catch (UnsupportedCharsetException e) {
-                      Log.wtf(OKHTTPTAG,"");
-                      Log.wtf(OKHTTPTAG,"Couldn't decode the response body; charset is likely malformed.");
-                      Log.wtf(OKHTTPTAG,"<-- END HTTP");
+                        Log.wtf(OKHTTPTAG, "");
+                        Log.wtf(OKHTTPTAG, "Couldn't decode the response body; charset is likely malformed.");
+                        Log.wtf(OKHTTPTAG, "<-- END HTTP");
 
                         return response;
                     }
                 }
 
                 if (!isPlaintext(buffer)) {
-                  Log.wtf(OKHTTPTAG,"");
-                  Log.wtf(OKHTTPTAG,"<-- END HTTP (binary " + buffer.size() + "-byte body omitted)");
+                    Log.wtf(OKHTTPTAG, "");
+                    Log.wtf(OKHTTPTAG, "<-- END HTTP (binary " + buffer.size() + "-byte body omitted)");
                     return response;
                 }
 
                 if (contentLength != 0) {
-                  Log.wtf(OKHTTPTAG,"");
-                  Log.wtf(OKHTTPTAG,buffer.clone().readString(charset));
+                    Log.wtf(OKHTTPTAG, "");
+                    Log.wtf(OKHTTPTAG, buffer.clone().readString(charset));
                 }
 
-              Log.wtf(OKHTTPTAG,"<-- END HTTP (" + buffer.size() + "-byte body)");
+                Log.wtf(OKHTTPTAG, "<-- END HTTP (" + buffer.size() + "-byte body)");
             }
         }
 
