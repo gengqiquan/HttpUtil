@@ -122,19 +122,19 @@ new HttpUtil.Builder("url")
 ## maven
 ```xml
 <dependency>
-  <groupId>com.gengqiquan.httputil</groupId>
-  <artifactId>library</artifactId>
+  <groupId>com.gengqiquan</groupId>
+  <artifactId>httputil</artifactId>
   <version>1.0.2</version>
   <type>pom</type>
 </dependency>
 ```
 ## gralde 
 ```
-compile 'com.gengqiquan.httputil:library:1.0.2'
+compile 'com.gengqiquan:httputil:1.0.2'
 ```
 ## lvy
 ```xml
-<dependency org='com.gengqiquan.httputil' name='library' rev='1.0.2'>
-  <artifact name='library' ext='pom' ></artifact>
+<dependency org='com.gengqiquan' name='httputil' rev='1.0.2'>
+  <artifact name='httputil' ext='pom' ></artifact>
 </dependency>
 ```
