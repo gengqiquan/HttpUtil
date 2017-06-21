@@ -20,13 +20,12 @@ import okhttp3.OkHttpClient;
 public class OkhttpProvidede {
     static OkHttpClient okHttpClient;
 
-    public static OkHttpClient okHttpClient(final Context context, String BASE_URL, List<String> SERVERS) {
+    public static OkHttpClient okHttpClient(final Context context, String BASE_URL) {
         if (okHttpClient == null) {
             synchronized (OkhttpProvidede.class) {
                 if (okHttpClient == null) {
                     OkHttpClient client = new OkHttpClient.Builder()
                             .addInterceptor(new DownLoadInterceptor(BASE_URL))
-                            .addInterceptor(new RetryAndChangeIpInterceptor(BASE_URL, SERVERS))
                             .addNetworkInterceptor(new CacheInterceptor())
                             .cache(new CacheProvide(context).provideCache())
                             .retryOnConnectionFailure(true)

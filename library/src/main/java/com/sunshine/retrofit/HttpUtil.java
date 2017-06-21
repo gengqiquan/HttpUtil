@@ -1,17 +1,11 @@
 package com.sunshine.retrofit;
 
-import android.app.Activity;
 import android.content.Context;
-import android.widget.Toast;
+import android.support.annotation.CheckResult;
 
-import com.sunshine.retrofit.converter.StringConverterFactory;
-import com.sunshine.retrofit.interfaces.Error;
 import com.sunshine.retrofit.interfaces.HeadersInterceptor;
 import com.sunshine.retrofit.interfaces.ParamsInterceptor;
-import com.sunshine.retrofit.interfaces.Progress;
-import com.sunshine.retrofit.interfaces.Success;
 import com.sunshine.retrofit.utils.OkhttpProvidede;
-import com.sunshine.retrofit.utils.WriteFileUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,35 +13,33 @@ import java.util.List;
 import java.util.Map;
 
 import okhttp3.OkHttpClient;
-import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.CallAdapter;
-import retrofit2.Callback;
 import retrofit2.Converter;
-import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
-import rx.Observable;
-import rx.schedulers.Schedulers;
+import retrofit2.converter.scalars.ScalarsConverterFactory;
 
 /**
+ * 网络请求封装类
  * Created by 耿 on 2016/6/28.
  */
 public class HttpUtil {
     private static volatile HttpUtil mInstance;
     private static volatile RetrofitHttpService mService;
-    private static String mVersionApi;
+    private Context mAppliactionContext;
     private ParamsInterceptor mParamsInterceptor;
     private HeadersInterceptor mHeadersInterceptor;
 
     //构造函数私有，不允许外部调用
-    private HttpUtil(RetrofitHttpService mService, String mVersionApi, ParamsInterceptor mParamsInterceptor, HeadersInterceptor mHeadersInterceptor) {
+    private HttpUtil(RetrofitHttpService mService, Context mAppliactionContext, ParamsInterceptor mParamsInterceptor, HeadersInterceptor mHeadersInterceptor) {
         this.mService = mService;
-        this.mVersionApi = mVersionApi;
+        this.mAppliactionContext = mAppliactionContext;
         this.mParamsInterceptor = mParamsInterceptor;
         this.mHeadersInterceptor = mHeadersInterceptor;
     }
 
+    @CheckResult
     public static RetrofitHttpService getService() {
         if (mInstance == null) {
             throw new NullPointerException("HttpUtil has not be initialized");
@@ -55,25 +47,32 @@ public class HttpUtil {
         return mService;
     }
 
+    @CheckResult
+    public static HttpUtil getmInstance() {
+        if (mInstance == null) {
+            throw new NullPointerException("HttpUtil has not be initialized");
+        }
+        return mInstance;
+    }
+
+    public void setParamsInterceptor(ParamsInterceptor interceptor) {
+        this.mParamsInterceptor = interceptor;
+    }
+
     public static class SingletonBuilder {
         private Context appliactionContext;
         private String baseUrl;
         private List<String> servers = new ArrayList<>();
-        private String versionApi;
         private ParamsInterceptor paramsInterceptor;
         private HeadersInterceptor headersInterceptor;
         private List<Converter.Factory> converterFactories = new ArrayList<>();
         private List<CallAdapter.Factory> adapterFactories = new ArrayList<>();
         OkHttpClient client;
 
-        public SingletonBuilder(Context context) {
-            try {//防止传入的是activity的上下文
-                Activity activity = (Activity) context;
-                appliactionContext = context.getApplicationContext();
-            } catch (Exception e) {
-                e.printStackTrace();
-                appliactionContext = context;
-            }
+        public SingletonBuilder(Context context, String baseUrl) {
+            appliactionContext = context.getApplicationContext();
+            this.baseUrl = baseUrl;
+            client = OkhttpProvidede.okHttpClient(appliactionContext, baseUrl);
         }
 
         public SingletonBuilder client(OkHttpClient client) {
@@ -81,8 +80,9 @@ public class HttpUtil {
             return this;
         }
 
-        public SingletonBuilder versionApi(String versionApi) {
-            this.versionApi = versionApi;
+
+        public SingletonBuilder headersInterceptor(HeadersInterceptor interceptor) {
+            this.headersInterceptor = interceptor;
             return this;
         }
 
@@ -91,15 +91,6 @@ public class HttpUtil {
             return this;
         }
 
-        public SingletonBuilder headersInterceptor(HeadersInterceptor headersInterceptor) {
-            this.headersInterceptor = headersInterceptor;
-            return this;
-        }
-
-        public SingletonBuilder baseUrl(String baseUrl) {
-            this.baseUrl = baseUrl;
-            return this;
-        }
 
         public SingletonBuilder addServerUrl(String ipUrl) {
             this.servers.add(ipUrl);
@@ -111,12 +102,12 @@ public class HttpUtil {
             return this;
         }
 
-        public SingletonBuilder addConverterFactory(Converter.Factory factory) {
+        public SingletonBuilder converterFactory(Converter.Factory factory) {
             this.converterFactories.add(factory);
             return this;
         }
 
-        public SingletonBuilder addCallFactory(CallAdapter.Factory factory) {
+        public SingletonBuilder callFactory(CallAdapter.Factory factory) {
             this.adapterFactories.add(factory);
             return this;
         }
@@ -126,14 +117,12 @@ public class HttpUtil {
                 throw new NullPointerException("BASE_URL can not be null");
             }
             if (converterFactories.size() == 0) {
-                converterFactories.add(StringConverterFactory.create());
+                converterFactories.add(ScalarsConverterFactory.create());
             }
             if (adapterFactories.size() == 0) {
                 adapterFactories.add(RxJavaCallAdapterFactory.create());
             }
-            if (client == null) {
-                client = OkhttpProvidede.okHttpClient(appliactionContext, baseUrl, servers);
-            }
+
             Retrofit.Builder builder = new Retrofit.Builder();
 
             for (Converter.Factory converterFactory : converterFactories) {
@@ -147,23 +136,13 @@ public class HttpUtil {
                     .client(client).build();
             RetrofitHttpService retrofitHttpService =
                     retrofit.create(RetrofitHttpService.class);
-            mInstance = new HttpUtil(retrofitHttpService, versionApi, paramsInterceptor, headersInterceptor);
+
+            mInstance = new HttpUtil(retrofitHttpService, appliactionContext, paramsInterceptor, headersInterceptor);
             return mInstance;
         }
     }
 
-
-    public static String V(String url) {
-        if (checkNULL(mVersionApi)) {
-            throw new NullPointerException("can not add VersionApi ,because of VersionApi is null");
-        }
-        if (!url.contains(mVersionApi)) {
-            return mVersionApi + url;
-        }
-        return url;
-    }
-
-
+    @CheckResult
     public static Map<String, String> checkParams(Map<String, String> params) {
         if (params == null) {
             params = new HashMap<>();
@@ -187,7 +166,7 @@ public class HttpUtil {
         if (mInstance.mHeadersInterceptor != null) {
             headers = mInstance.mHeadersInterceptor.checkHeaders(headers);
         }
-        //retrofit的headers的值不能为null，此处做下校验，防止出错
+        //retrofit的params的值不能为null，此处做下校验，防止出错
         for (Map.Entry<String, String> entry : headers.entrySet()) {
             if (entry.getValue() == null) {
                 headers.put(entry.getKey(), "");
@@ -197,40 +176,21 @@ public class HttpUtil {
     }
 
     // 判断是否NULL
+    @CheckResult
     public static boolean checkNULL(String str) {
         return str == null || "null".equals(str) || "".equals(str);
 
     }
 
-    // 判断是否NULL
-    public static void Error(Context context, String msg) {
-        if (checkNULL(msg)) {
-            msg = "未知异常";
-        }
-        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
-    }
 
-    public static String message(String mes) {
-        if (checkNULL(mes)) {
-            mes = "似乎已断开与互联网连接";
-        }
-
-        if (mes.equals("timeout") || mes.equals("SSL handshake timed out")) {
-            return "网络请求超时";
-        } else {
-            return mes;
-        }
-
-    }
-
-    final static Map<String, Call> CALL_MAP = new HashMap<>();
+    static Map<String, Call> CALL_MAP = new HashMap<>();
 
     /*
     *添加某个请求
     *@author Administrator
     *@date 2016/10/12 11:00
     */
-    private static synchronized void putCall(Object tag, String url, Call call) {
+    public static synchronized void putCall(Object tag, String url, Call call) {
         if (tag == null)
             return;
         synchronized (CALL_MAP) {
@@ -267,7 +227,7 @@ public class HttpUtil {
     *@author Administrator
     *@date 2016/10/12 10:58
     */
-    private static synchronized void removeCall(String url) {
+    public static synchronized void removeCall(String url) {
         synchronized (CALL_MAP) {
             for (String key : CALL_MAP.keySet()) {
                 if (key.contains(url)) {
@@ -279,210 +239,5 @@ public class HttpUtil {
         }
     }
 
-    public static class Builder {
-        Map<String, String> params = new HashMap<>();
-        Map<String, String> headers = new HashMap<>();
-        String url;
-        String path;
-        Error mErrorCallBack;
-        Success mSuccessCallBack;
-        Progress mProgressCallBack;
-        boolean addVersion = false;
-        Object tag;
 
-        public Builder CacheTime(String time) {
-            headers.put("Cache-Time", time);
-            return this;
-        }
-
-        public Builder Url(String url) {
-            this.url = url;
-            return this;
-        }
-
-        public Builder SavePath(String path) {
-            this.path = path;
-            return this;
-        }
-
-        public Builder Tag(Object tag) {
-            this.tag = tag;
-            return this;
-        }
-
-
-        public Builder Params(Map<String, String> params) {
-            this.params.putAll(params);
-            return this;
-        }
-
-        public Builder Params(String key, String value) {
-            this.params.put(key, value);
-            return this;
-        }
-
-        public Builder Headers(Map<String, String> headers) {
-            this.headers.putAll(headers);
-            return this;
-        }
-
-        public Builder Headers(String key, String value) {
-            this.headers.put(key, value);
-            return this;
-        }
-
-        public Builder Success(Success success) {
-            this.mSuccessCallBack = success;
-            return this;
-        }
-
-        public Builder Progress(Progress progress) {
-            this.mProgressCallBack = progress;
-            return this;
-        }
-
-        public Builder Version() {
-            this.addVersion = true;
-            return this;
-        }
-
-        public Builder Error(Error error) {
-            this.mErrorCallBack = error;
-            return this;
-        }
-
-        public Builder() {
-            this.setParams();
-        }
-
-        public Builder(String url) {
-            this.setParams(url);
-        }
-
-        private void setParams() {
-            this.setParams(null);
-        }
-
-        private void setParams(String url) {
-            if (mInstance == null) {
-                throw new NullPointerException("HttpUtil has not be initialized");
-            }
-            this.url = url;
-            this.params = new HashMap<>();
-            this.mErrorCallBack = c -> {
-            };
-            this.mSuccessCallBack = c -> {
-            };
-            this.mProgressCallBack = c -> {
-            };
-        }
-
-        private String checkUrl(String url) {
-            if (checkNULL(url)) {
-                throw new NullPointerException("absolute url can not be empty");
-            }
-            if (addVersion) {
-                url = mInstance.V(url);
-            }
-            return url;
-        }
-
-        public void get() {
-            Call call = mService.get(checkHeaders(headers), checkUrl(this.url), checkParams(params));
-            putCall(tag, url, call);
-            call.enqueue(new Callback<String>() {
-                @Override
-                public void onResponse(Call<String> call, Response<String> response) {
-                    if (response.code() == 200) {
-                        mSuccessCallBack.Success(response.body().toString());
-                    } else {
-                        mErrorCallBack.Error(response.code(), message(response.message()), null);
-                    }
-                    if (tag != null)
-                        removeCall(url);
-                }
-
-                @Override
-                public void onFailure(Call<String> call, Throwable t) {
-                    mErrorCallBack.Error(200, message(t.getMessage()), t);
-                    if (tag != null)
-                        removeCall(url);
-                }
-            });
-        }
-
-        public void post() {
-            Call call = mService.post(checkHeaders(headers), checkUrl(this.url), checkParams(params));
-            putCall(tag, url, call);
-            call.enqueue(new Callback<String>() {
-                @Override
-                public void onResponse(Call<String> call, Response<String> response) {
-                    if (response.code() == 200) {
-                        mSuccessCallBack.Success(response.body().toString());
-                    } else {
-                        mErrorCallBack.Error(response.code(), message(response.message()), null);
-                    }
-                    if (tag != null)
-                        removeCall(url);
-                }
-
-                @Override
-                public void onFailure(Call<String> call, Throwable t) {
-                    mErrorCallBack.Error(200, message(t.getMessage()), t);
-                    if (tag != null)
-                        removeCall(url);
-                }
-            });
-        }
-
-        public Observable<String> Obget() {
-            this.url = checkUrl(this.url);
-            this.params = checkParams(this.params);
-            return mService.Obget(checkHeaders(headers), url, checkParams(params));
-        }
-
-
-        public Observable<String> Obpost() {
-            this.url = checkUrl(this.url);
-            this.params = checkParams(this.params);
-            return mService.Obpost(checkHeaders(headers), url, checkParams(params));
-        }
-
-        public Observable<ResponseBody> Obdownload() {
-            this.url = checkUrl(this.url);
-            this.params = checkParams(this.params);
-            this.headers.put(Constant.DOWNLOAD, Constant.DOWNLOAD);
-            this.headers.put(Constant.DOWNLOAD_URL, this.url);
-            return mService.Obdownload(checkHeaders(headers), url, checkParams(params));
-        }
-
-        //下载
-        public void download() {
-            this.url = checkUrl(this.url);
-            this.params = checkParams(this.params);
-            this.headers.put(Constant.DOWNLOAD, Constant.DOWNLOAD);
-            this.headers.put(Constant.DOWNLOAD_URL, this.url);
-            Call call = mService.download(checkHeaders(headers), url, checkParams(params));
-            putCall(tag, url, call);
-            Observable<ResponseBody> observable = Observable.create(subscriber -> {
-                        call.enqueue(new Callback<ResponseBody>() {
-                            @Override
-                            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                                subscriber.onNext(response.body());
-                            }
-
-                            @Override
-                            public void onFailure(Call<ResponseBody> call, Throwable t) {
-                                mErrorCallBack.Error(t);
-                            }
-                        });
-                    }
-            );
-            observable.observeOn(Schedulers.io())
-                    .subscribe(body -> WriteFileUtil.writeFile(body, path, mProgressCallBack, mSuccessCallBack, mErrorCallBack), t -> {
-                                mErrorCallBack.Error(t);
-                            }
-                    );
-        }
-    }
 }

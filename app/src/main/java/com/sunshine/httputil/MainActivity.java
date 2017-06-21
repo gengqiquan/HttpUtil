@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.TextView;
 
+import com.sunshine.retrofit.HttpBuilder;
 import com.sunshine.retrofit.HttpUtil;
 import com.sunshine.retrofit.interfaces.HeadersInterceptor;
 import com.sunshine.retrofit.interfaces.ParamsInterceptor;
@@ -35,8 +36,7 @@ public class MainActivity extends AppCompatActivity {
                 return headers;
             }
         };
-        new HttpUtil.SingletonBuilder(getApplicationContext())
-                .baseUrl("http://sw.bos.baidu.com")//URL请求前缀地址。必传
+        new HttpUtil.SingletonBuilder(getApplicationContext(),"http://sw.bos.baidu.com")
 //                .versionApi("")//API版本，不传不可以追加接口版本号
 //                .addServerUrl("")//备份服务器ip地址，可多次调用传递
 //                .addCallFactory()//不传默认StringConverterFactory
@@ -45,15 +45,15 @@ public class MainActivity extends AppCompatActivity {
                 //   .paramsInterceptor(mParamsInterceptor)//不传不进行参数统一处理
                 //   .headersInterceptor(mHeadersInterceptor)//不传不进行headers统一处理
                 .build();
-        new HttpUtil.Builder("http://sw.bos.baidu.com/sw-search-sp/software/c07cde08ce4/Photoshop_CS6.exe")
-                .SavePath(getExternalFilesDir(null) + File.separator + "Photoshop_CS6.exe")
-                .Progress(p -> {
-                    progress.setText(100 * p + "%");
+        new HttpBuilder("http://sw.bos.baidu.com/sw-search-sp/software/c07cde08ce4/Photoshop_CS6.exe")
+                .path(getExternalFilesDir(null) + File.separator + "Photoshop_CS6.exe")
+                .progress(p -> {
+                    progress.setText(p+"");
                 })
-                .Success(s -> {
+                .success(s -> {
                     //返回path
                 })
-                .Error(t -> {
+                .error(t -> {
                 })
                 .download();
 
