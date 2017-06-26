@@ -14,12 +14,12 @@ import com.sunshine.retrofit.utils.WriteFileUtil;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.reactivex.Observable;
+import io.reactivex.schedulers.Schedulers;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-import rx.Observable;
-import rx.schedulers.Schedulers;
 
 import static com.sunshine.retrofit.HttpUtil.checkHeaders;
 import static com.sunshine.retrofit.HttpUtil.checkParams;

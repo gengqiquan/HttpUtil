@@ -17,7 +17,7 @@ import retrofit2.Call;
 import retrofit2.CallAdapter;
 import retrofit2.Converter;
 import retrofit2.Retrofit;
-import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.scalars.ScalarsConverterFactory;
 
 /**
@@ -120,7 +120,7 @@ public class HttpUtil {
                 converterFactories.add(ScalarsConverterFactory.create());
             }
             if (adapterFactories.size() == 0) {
-                adapterFactories.add(RxJavaCallAdapterFactory.create());
+                adapterFactories.add(RxJava2CallAdapterFactory.create());
             }
 
             Retrofit.Builder builder = new Retrofit.Builder();
