@@ -4,33 +4,31 @@ retrofit封装库
 # 发起请求
 ## get请求
 ```  java
- new HttpUtil.Builder("url")
-                .Params(map)
-                .Params("key","value")
-                .Version()//需要追加API版本号调用
-                .Tag(this)//需要取消请求的tag
-                .Success(str->{
+ new HttpBuilder("url")
+                .params(map)
+                .params("key","value")
+                .tag(this)//需要取消请求的tag
+                .success(str->{
                     //do something surccess
                 })
-                .Error(v->{
+                .error(v->{
                     //deal something error
                 })
                 .get();
 ```
 ## post请求
 ```java
-new HttpUtil.Builder("url")
-                .Params(map)
-                .Params("key","value")
-                .Version()//需要追加API版本号调用
-                .Tag(this)//需要取消请求的tag
-                .Success(new Success() {
+new HttpBuilder("url")
+                .params(map)
+                .params("key","value")
+                .tag(this)//需要取消请求的tag
+                .success(new Success() {
                     @Override
                     public void Success(String model) {
 
                     }
                 })
-                .Error(new Error() {
+                .error(new Error() {
                     @Override
                     public void Error(Object... values) {
 
@@ -43,15 +41,15 @@ new HttpUtil.Builder("url")
 流式下载，直接写入文件，不存到内存，避免oom
 
 ```java
- new HttpUtil.Builder("http://sw.bos.baidu.com/sw-search-sp/software/c07cde08ce4/Photoshop_CS6.exe")
-                .SavePath(getExternalFilesDir(null) + File.separator + "Photoshop_CS6.exe")
-                .Progress(p -> {
+ new HttpBuilder("http://sw.bos.baidu.com/sw-search-sp/software/c07cde08ce4/Photoshop_CS6.exe")
+                .path(getExternalFilesDir(null) + File.separator + "Photoshop_CS6.exe")
+                .progress(p -> {
                     progress.setText(100 * p + "%");
                 })
-                .Success(s -> {
+                .success(s -> {
                     //返回path
                 })
-                .Error(t -> {
+                .error(t -> {
                 })
                 .download();
 ```
@@ -60,11 +58,10 @@ new HttpUtil.Builder("url")
 返回的流为异步
 
 ```java
-new HttpUtil.Builder("url")
-                .Params(map)
-                .Params("key","value")
-                .Version()//需要追加API版本号调用
-                .Tag(this)//需要取消请求的tag
+new HttpBuilder("url")
+                .params(map)
+                .params("key","value")
+                .tag(this)//需要取消请求的tag
            .obpost();
                //obget() get请求
                 //Obdownload()下载流;
