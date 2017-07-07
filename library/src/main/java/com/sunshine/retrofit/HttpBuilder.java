@@ -164,6 +164,9 @@ public class HttpBuilder {
      * @date 2017/3/25 下午4:12
      */
     boolean allready() {
+        if (!checkNetConnected || mContext == null) {
+            return true;
+        }
         if (!NetUtils.isConnected(mContext)) {
             Toast.makeText(mContext, "检测到网络已关闭，请先打开网络", Toast.LENGTH_SHORT).show();
             NetUtils.openSetting(mContext);//跳转到网络设置界面

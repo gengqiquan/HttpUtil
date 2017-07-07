@@ -12,8 +12,8 @@ android {
         defaultPublishConfig "debug"
         minSdkVersion 11
         targetSdkVersion 23
-        versionCode 1040
-        versionName "1.0.4"
+        versionCode 1050
+        versionName "1.0.5"
     }
     buildTypes {
         debug {
@@ -51,7 +51,7 @@ publish {
     userOrg = 'gengqiquan'//bintray.com用户名
     groupId = 'com.gengqiquan'//jcenter上的路径
     artifactId = 'httputil'//项目名称
-    publishVersion = '1.0.4'//版本号
+    publishVersion = '1.0.5'//版本号
     desc = 'httputil'//描述，不重要
     website = 'https://github.com/gengqiquan/HttpUtil'
 }

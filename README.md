@@ -105,7 +105,6 @@ new HttpBuilder("url")
 ```java
    new HttpUtil.SingletonBuilder(getApplicationContext())
                 .baseUrl("baseurl")//URL请求前缀地址。必传
-//                .versionApi("")//API版本，不传不可以追加接口版本号
 //                .addServerUrl("")//备份服务器ip地址，可多次调用传递
 //                .addCallFactory()//不传默认StringConverterFactory
 //                .addConverterFactory()//不传默认RxJavaCallAdapterFactory
@@ -121,17 +120,17 @@ new HttpBuilder("url")
 <dependency>
   <groupId>com.gengqiquan</groupId>
   <artifactId>httputil</artifactId>
-  <version>1.0.4</version>
+  <version>1.0.5</version>
   <type>pom</type>
 </dependency>
 ```
 ## gralde 
 ```
-compile 'com.gengqiquan:httputil:1.0.4'
+compile 'com.gengqiquan:httputil:1.0.5'
 ```
 ## lvy
 ```xml
-<dependency org='com.gengqiquan' name='httputil' rev='1.0.4'>
+<dependency org='com.gengqiquan' name='httputil' rev='1.0.5'>
   <artifact name='httputil' ext='pom' ></artifact>
 </dependency>
 ```
