@@ -1,3 +1,5 @@
+停止维护 使用新库https://github.com/gengqiquan/FlowHttp
+
 # HttpUtil
 retrofit封装库
 
